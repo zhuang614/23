@@ -492,9 +492,14 @@ function updateGame() {
   pollutantsToRemove.reverse().forEach(idx => {
     if (pollutants[idx]) {
       let coinValue = pollutants[idx].coinValue || 5;
+      // Check if the pollutant died due to a community (not by bullet/tower)
+      // If so, do NOT increase score
+      // We'll check if the pollutant is close to a community and that community just lost health
+      // But the easiest way is to only add score if the pollutant was killed by a bullet (handled in bullet logic)
+      // So here, do NOT add score for pollutants removed by community/tower collision
       gameArea.removeChild(pollutants[idx].el);
       pollutants.splice(idx, 1);
-      score += 100; // +100 for each pollutant killed
+      // Do NOT add: score += 100;
       coins += coinValue;
       scoreDisplay.innerText = score;
       updateCoins();
@@ -568,20 +573,7 @@ function updateGame() {
   communities = communities.filter(c => c.alive);
   communityDisplay.innerText = communities.length;
   if (communities.length === 0) {
-    //endGame();
-    // Endless mode: respawn 3 communities and 3 towers, reset level to 1 if you want, or keep going
-    for (let i = 0; i < 3; i++) {
-      createCommunity(
-        Math.random() * (gameArea.clientWidth - 40),
-        Math.random() * (gameArea.clientHeight - 40)
-      );
-    }
-    communities.forEach(comm => createTowerAroundCommunity(comm));
-    // Optionally, reset level or keep incrementing
-    // level = 1;
-    // levelDisplay.innerText = level;
-    // Optionally, show confetti for "revival"
-    showConfetti();
+    endGame(); // End the game when all communities are destroyed
     return;
   }
   if (spawnedPollutants >= maxPollutants && pollutants.length === 0 && bullets.length === 0) {
@@ -645,7 +637,7 @@ function nextLevel() {
   level++;
   levelDisplay.innerText = level;
   spawnedPollutants = 0;
-  maxPollutants = Math.floor(Math.random() * 5) + 1;
+  maxPollutants = level * 5; // Spawn level × 5 pollutants every level
 
   score += 1000; // +1000 for leveling up
   scoreDisplay.innerText = score;
@@ -891,22 +883,87 @@ function createTowerAroundCommunity(community, minDist = 50, maxDist = 90, maxTr
 }
 
 // --- Responsive Layout & Brand Colors ---
-document.body.style.background = "#f4f8fb"; // charity: water light blue
-gameArea.style.background = "#eaf6fd"; // lighter blue for play area
-gameArea.style.borderRadius = "16px";
-gameArea.style.boxShadow = "0 4px 24px #b3d8f1";
-gameArea.style.maxWidth = "900px";
-gameArea.style.margin = "auto";
-gameArea.style.position = "relative";
-gameArea.style.overflow = "hidden";
-gameArea.style.width = "90vw";
-gameArea.style.height = "60vw";
-gameArea.style.maxHeight = "600px";
-gameArea.style.minHeight = "350px";
-gameArea.style.minWidth = "350px";
+document.body.style.background = "#8BD1CB";
+document.body.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
+if (typeof gameArea !== "undefined") {
+  gameArea.style.background = "#EAF6FD";
+  gameArea.style.border = "4px solid #2E9DF7";
+  gameArea.style.borderRadius = "18px";
+  gameArea.style.boxShadow = "0 4px 24px #2E9DF733";
+  gameArea.style.width = "90vw";
+  gameArea.style.maxWidth = "900px";
+  gameArea.style.height = "60vw";
+  gameArea.style.maxHeight = "600px";
+  gameArea.style.minHeight = "350px";
+  gameArea.style.minWidth = "350px";
+  gameArea.style.margin = "auto";
+  gameArea.style.position = "relative";
+  gameArea.style.overflow = "hidden";
+}
+if (typeof coinPanel !== "undefined") {
+  coinPanel.style.background = "#fff";
+  coinPanel.style.border = "2px solid #FFC907";
+  coinPanel.style.borderRadius = "12px";
+  coinPanel.style.boxShadow = "0 2px 12px #FFC90733";
+  coinPanel.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
+  coinPanel.style.maxWidth = "900px";
+  coinPanel.style.margin = "20px auto";
+  coinPanel.style.width = "90vw";
+}
+if (typeof scoreDisplay !== "undefined") {
+  scoreDisplay.style.color = "#2E9DF7";
+  scoreDisplay.style.fontWeight = "bold";
+}
+if (typeof levelDisplay !== "undefined") {
+  levelDisplay.style.color = "#FFC907";
+  levelDisplay.style.fontWeight = "bold";
+}
+document.querySelectorAll("button").forEach(btn => {
+  btn.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
+  btn.style.fontWeight = "bold";
+  btn.style.borderRadius = "8px";
+});
+const permDropdownBtn = document.getElementById("permDropdown");
+if (permDropdownBtn) {
+  permDropdownBtn.style.background = "#FFC907";
+  permDropdownBtn.style.color = "#222";
+}
+if (typeof nextLevelBtn !== "undefined") {
+  nextLevelBtn.style.background = "#2E9DF7";
+  nextLevelBtn.style.color = "#fff";
+}
+if (typeof autoNextBtn !== "undefined") {
+  autoNextBtn.style.background = "#FFC907";
+  autoNextBtn.style.color = "#222";
+  autoNextBtn.style.border = "none";
+}
+if (typeof resetBtn !== "undefined") {
+  resetBtn.style.background = "#F5402C";
+  resetBtn.style.color = "#fff";
+  resetBtn.style.border = "none";
+}
+const styleBrand = document.createElement("style");
+styleBrand.innerHTML = `
+  .can:hover { filter: brightness(1.2) drop-shadow(0 0 8px #FFC907); }
+  .mud:hover { filter: brightness(0.8) drop-shadow(0 0 8px #F5402C); }
+  .can, .mud { border-radius: 50%; border: 2px solid #FFC907; }
+  #coinPanel { box-shadow: 0 2px 12px #FFC90733; }
+  @media (max-width: 700px) {
+    #gameArea { min-width: 220px !important; min-height: 220px !important; width: 98vw !important; height: 60vw !important; }
+    .can, .mud { width: 24px !important; height: 24px !important; }
+    #coinPanel { font-size: 0.95rem; width: 98vw !important; }
+  }
+`;
+document.head.appendChild(styleBrand);
+
 window.addEventListener("resize", () => {
-  gameArea.style.width = Math.min(window.innerWidth * 0.9, 900) + "px";
-  gameArea.style.height = Math.min(window.innerWidth * 0.6, 600) + "px";
+  if (typeof gameArea !== "undefined") {
+    gameArea.style.width = Math.min(window.innerWidth * 0.9, 900) + "px";
+    gameArea.style.height = Math.min(window.innerWidth * 0.6, 600) + "px";
+  }
+  if (typeof coinPanel !== "undefined") {
+    coinPanel.style.width = Math.min(window.innerWidth * 0.9, 900) + "px";
+  }
 });
 
 // --- Interactive "can" elements to collect points ---
@@ -926,14 +983,14 @@ function spawnCan() {
   can.onclick = function () {
     score += 15;
     scoreDisplay.innerText = score;
-    can.style.boxShadow = "0 0 16px 4px #ffd700";
-    can.style.backgroundColor = "#ffe066";
+    can.style.boxShadow = "0 0 16px 4px #FFC907";
+    can.style.backgroundColor = "#FFE066";
     setTimeout(() => {
       if (can.parentNode) can.parentNode.removeChild(can);
     }, 200);
     // Visual feedback: briefly animate score
-    scoreDisplay.style.color = "#ffd700";
-    setTimeout(() => { scoreDisplay.style.color = "#222"; }, 300);
+    scoreDisplay.style.color = "#FFC907";
+    setTimeout(() => { scoreDisplay.style.color = "#2E9DF7"; }, 300);
   };
 
   // Remove can after 7 seconds if not clicked
@@ -964,14 +1021,14 @@ function spawnMud() {
   mud.onclick = function () {
     score = Math.max(0, score - 10);
     scoreDisplay.innerText = score;
-    mud.style.boxShadow = "0 0 16px 4px #b5651d";
-    mud.style.backgroundColor = "#b5651d";
+    mud.style.boxShadow = "0 0 16px 4px #F5402C";
+    mud.style.backgroundColor = "#F5402C";
     setTimeout(() => {
       if (mud.parentNode) mud.parentNode.removeChild(mud);
     }, 200);
     // Visual feedback: briefly animate score
-    scoreDisplay.style.color = "#b5651d";
-    setTimeout(() => { scoreDisplay.style.color = "#222"; }, 300);
+    scoreDisplay.style.color = "#F5402C";
+    setTimeout(() => { scoreDisplay.style.color = "#2E9DF7"; }, 300);
   };
 
   // Remove mud after 6 seconds if not clicked
@@ -991,9 +1048,44 @@ resetBtn.textContent = "Reset";
 resetBtn.className = "btn btn-danger";
 resetBtn.style.marginLeft = "10px";
 resetBtn.onclick = function () {
-  resetGame();
-  // Remove all cans and muds
+  // Reset all values to level 1 and restart the game
+  score = 0;
+  level = 1;
+  coins = 0;
+  towerStats.range = 60;
+  towerStats.power = 100;
+  towerStats.speed = 1.0;
+  towerStats.health = 100;
+  communityBaseHealth = 100;
+  towerBaseHealth = 100;
+  spawnedPollutants = 0;
+  maxPollutants = 10;
+  scoreDisplay.innerText = score;
+  levelDisplay.innerText = level;
+  updateCoins();
+  // Remove all entities
+  pollutants.forEach(p => p.el && p.el.parentNode && p.el.parentNode.removeChild(p.el));
+  towers.forEach(t => t.el && t.el.parentNode && t.el.parentNode.removeChild(t.el));
+  communities.forEach(c => c.el && c.el.parentNode && c.el.parentNode.removeChild(c.el));
+  bullets.forEach(b => b.el && b.el.parentNode && b.el.parentNode.removeChild(b.el));
   document.querySelectorAll(".can, .mud").forEach(el => el.remove());
+  pollutants = [];
+  towers = [];
+  communities = [];
+  bullets = [];
+  // Respawn 3 communities and towers
+  for (let i = 0; i < 3; i++) {
+    createCommunity(
+      Math.random() * (gameArea.clientWidth - 40),
+      Math.random() * (gameArea.clientHeight - 40)
+    );
+  }
+  communities.forEach(comm => createTowerAroundCommunity(comm));
+  // Restart game loop
+  gameActive = true;
+  startBtn.style.display = "none";
+  gameOverDisplay.style.display = "none";
+  restartGameInterval();
 };
 coinPanel.appendChild(resetBtn);
 
@@ -1069,3 +1161,8 @@ style.innerHTML = `
   }
 `;
 document.head.appendChild(style);
+
+nextLevelBtn.onclick = function () {
+  nextLevelBtn.style.display = "none";
+  nextLevel();
+};
