@@ -319,6 +319,36 @@ function createPollutant() {
   spawnedPollutants++;
 }
 
+// --- Create Bullet ---
+function createBullet(x, y, target, power) {
+  const bullet = document.createElement("div");
+  bullet.className = "bullet";
+  bullet.style.position = "absolute";
+  bullet.style.width = "14px";
+  bullet.style.height = "14px";
+  bullet.style.borderRadius = "50%";
+  bullet.style.background = palette.darkBlue;
+  bullet.style.border = `2px solid ${palette.yellow}`;
+  bullet.style.boxShadow = `0 0 12px 4px ${palette.yellow}`;
+  bullet.style.left = `${x + 8}px`; // center bullet on tower (tower is 30x30)
+  bullet.style.top = `${y + 8}px`;
+  bullet.style.zIndex = "20";
+  bullet.style.pointerEvents = "none";
+  bullet.style.transition = "left 0.05s linear, top 0.05s linear";
+  gameArea.appendChild(bullet);
+
+  bullets.push({
+    el: bullet,
+    x: x + 8,
+    y: y + 8,
+    target: target,
+    power: power
+  });
+}
+
+// (Make sure your towers call createBullet as in your updateGame loop.)
+// The bullet CSS is already included in your code and will make bullets visible.
+
 // --- Main Game Loop ---
 function updateGame() {
   let pollutantsToRemove = [];
@@ -424,7 +454,9 @@ function updateGame() {
     }
     const dx = bullet.target.x - bullet.x, dy = bullet.target.y - bullet.y, dist = Math.sqrt(dx * dx + dy * dy), speed = 8;
     if (dist < 10) {
-      bullet.target.hp -= bullet.power; // Damage equals tower power
+      // Make damage equal to the current power value of the tower that fired the bullet
+      // If you store tower reference in bullet, use bullet.tower.power, otherwise use bullet.power
+      bullet.target.hp -= bullet.power; // bullet.power should be set to towerStats.power when fired
       bullet.target.el.dataset.hp = bullet.target.hp;
       setHpBar(bullet.target.el, bullet.target.hp, 50 + level * 20);
       if (bullet.target.hp <= 0) {
@@ -519,7 +551,8 @@ function nextLevel() {
   maxPollutants = level * 5;
   score += 1000;
   scoreDisplay.innerText = score;
-  showConfetti();
+  // Show confetti every 10 levels
+  if (level % 10 === 0) showConfetti();
   // Apply permanent upgrades at each new level
   if (permPowerActive) towerStats.power += 5;
   if (permSpeedActive) { towerStats.speed *= 2; if (gameActive) restartGameInterval(); }
@@ -584,7 +617,7 @@ if (replayBtn) {
   };
 }
 
-// --- Confetti celebration on win ---
+// --- Confetti celebration on win or every 10 levels ---
 function showConfetti() {
   const confettiContainer = document.createElement("div");
   confettiContainer.style.position = "fixed";
@@ -701,14 +734,26 @@ function spawnMud() {
 }
 setInterval(() => { if (gameActive) spawnMud(); }, 12000 + Math.random() * 8000);
 
+// --- Color palette from image ---
+const palette = {
+  yellow: "#FFC907",
+  darkBlue: "#003366",
+  blue: "#77A8BB",
+  lightYellow: "#FFF7E1",
+  black: "#1A1A1A",
+  peach: "#FED8C1",
+  brown: "#BF6C46",
+  lightGray: "#CBCCD1"
+};
+
 // --- Responsive Layout & Brand Colors ---
-document.body.style.background = "#fff"; // set background to white
+document.body.style.background = palette.lightYellow;
 document.body.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
 if (typeof gameArea !== "undefined") {
-  gameArea.style.background = "#77A8BB"; // blue from palette
-  gameArea.style.border = "4px solid #003366"; // dark blue
+  gameArea.style.background = palette.blue;
+  gameArea.style.border = `4px solid ${palette.darkBlue}`;
   gameArea.style.borderRadius = "18px";
-  gameArea.style.boxShadow = "0 4px 24px #CBCCD1"; // light gray shadow
+  gameArea.style.boxShadow = `0 4px 24px ${palette.lightGray}`;
   gameArea.style.width = "90vw";
   gameArea.style.maxWidth = "900px";
   gameArea.style.height = "60vw";
@@ -720,45 +765,45 @@ if (typeof gameArea !== "undefined") {
   gameArea.style.overflow = "hidden";
 }
 if (typeof coinPanel !== "undefined") {
-  coinPanel.style.background = "#FFF7E1"; // lightest yellow
-  coinPanel.style.border = "2px solid #FFC907"; // yellow
+  coinPanel.style.background = palette.lightYellow;
+  coinPanel.style.border = `2px solid ${palette.yellow}`;
   coinPanel.style.borderRadius = "12px";
-  coinPanel.style.boxShadow = "0 2px 12px #CBCCD1";
+  coinPanel.style.boxShadow = `0 2px 12px ${palette.lightGray}`;
   coinPanel.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
   coinPanel.style.maxWidth = "900px";
   coinPanel.style.margin = "20px auto";
   coinPanel.style.width = "90vw";
 }
 if (typeof scoreDisplay !== "undefined") {
-  scoreDisplay.style.color = "#003366"; // dark blue
+  scoreDisplay.style.color = palette.darkBlue;
   scoreDisplay.style.fontWeight = "bold";
 }
 if (typeof levelDisplay !== "undefined") {
-  levelDisplay.style.color = "#FFC907"; // yellow
+  levelDisplay.style.color = palette.yellow;
   levelDisplay.style.fontWeight = "bold";
 }
 document.querySelectorAll("button").forEach(btn => {
   btn.style.fontFamily = "'Proxima Nova', 'Avenir', Arial, sans-serif";
   btn.style.fontWeight = "bold";
   btn.style.borderRadius = "8px";
-  btn.style.background = "#FFC907"; // yellow
-  btn.style.color = "#1A1A1A"; // black
-  btn.style.border = "2px solid #003366"; // dark blue
+  btn.style.background = palette.yellow;
+  btn.style.color = palette.black;
+  btn.style.border = `2px solid ${palette.darkBlue}`;
 });
 const permDropdownBtn = document.getElementById("permDropdown");
 if (permDropdownBtn) {
-  permDropdownBtn.style.background = "#FFC907";
-  permDropdownBtn.style.color = "#1A1A1A";
+  permDropdownBtn.style.background = palette.yellow;
+  permDropdownBtn.style.color = palette.black;
 }
 const styleBrand = document.createElement("style");
 styleBrand.innerHTML = `
-  .can:hover { filter: brightness(1.2) drop-shadow(0 0 8px #FFC907); }
-  .mud:hover { filter: brightness(0.8) drop-shadow(0 0 8px #BF6C46); }
-  .can, .mud { border-radius: 50%; border: 2px solid #FFC907; }
-  #coinPanel { box-shadow: 0 2px 12px #CBCCD1; }
-  .can { background-color: #FED8C1 !important; }
-  .mud { background-color: #BF6C46 !important; }
-  #gameOver, #score, #level { color: #003366 !important; }
+  .can:hover { filter: brightness(1.2) drop-shadow(0 0 8px ${palette.yellow}); }
+  .mud:hover { filter: brightness(0.8) drop-shadow(0 0 8px ${palette.brown}); }
+  .can, .mud { border-radius: 50%; border: 2px solid ${palette.yellow}; }
+  #coinPanel { box-shadow: 0 2px 12px ${palette.lightGray}; }
+  .can { background-color: ${palette.peach} !important; }
+  .mud { background-color: ${palette.brown} !important; }
+  #gameOver, #score, #level { color: ${palette.darkBlue} !important; }
   @media (max-width: 700px) {
     #gameArea { min-width: 220px !important; min-height: 220px !important; width: 98vw !important; height: 60vw !important; }
     .can, .mud { width: 24px !important; height: 24px !important; }
@@ -767,82 +812,15 @@ styleBrand.innerHTML = `
 `;
 document.head.appendChild(styleBrand);
 
-window.addEventListener("resize", () => {
-  if (typeof gameArea !== "undefined") {
-    gameArea.style.width = Math.min(window.innerWidth * 0.9, 900) + "px";
-    gameArea.style.height = Math.min(window.innerWidth * 0.6, 600) + "px";
-  }
-  if (typeof coinPanel !== "undefined") {
-    coinPanel.style.width = Math.min(window.innerWidth * 0.9, 900) + "px";
-  }
-});
-
-// --- Create Bullet ---
-function createBullet(x, y, target, power) {
-  const bullet = document.createElement("div");
-  bullet.className = "bullet";
-  bullet.style.position = "absolute";
-  bullet.style.width = "12px";
-  bullet.style.height = "12px";
-  bullet.style.borderRadius = "50%";
-  bullet.style.background = "#003366"; // dark blue from palette
-  bullet.style.left = `${x + 9}px`; // center bullet on tower (tower is 30x30)
-  bullet.style.top = `${y + 9}px`;
-  bullet.style.boxShadow = "0 0 8px #FFC907";
-  bullet.style.zIndex = "10";
-  gameArea.appendChild(bullet);
-
-  bullets.push({
-    el: bullet,
-    x: x + 9,
-    y: y + 9,
-    target: target,
-    power: power
-  });
-}
-
-// --- Update towers to shoot bullets with correct power ---
-towers.forEach(tower => {
-  if (tower.health <= 0) return;
-  if (dist < 10) {
-    bullet.target.hp -= bullet.power; // Damage equals tower power
-    bullet.target.el.dataset.hp = bullet.target.hp;
-    setHpBar(bullet.target.el, bullet.target.hp, 50 + level * 20);
-    if (bullet.target.hp <= 0) {
-      let idx = pollutants.indexOf(bullet.target);
-      if (idx !== -1) {
-        let coinValue = bullet.target.coinValue || 5;
-        gameArea.removeChild(bullet.target.el);
-        pollutants.splice(idx, 1);
-        score += 10;
-        coins += coinValue;
-        scoreDisplay.innerText = score;
-        updateCoins();
-      }
-    }
-    if (bullet.el.parentNode) bullet.el.parentNode.removeChild(bullet.el);
-    bulletsToRemove.push(bIdx);
-  } else {
-    bullet.x += (dx / dist) * speed;
-    bullet.y += (dy / dist) * speed;
-    bullet.el.style.left = `${bullet.x}px`;
-    bullet.el.style.top = `${bullet.y}px`;
-  }
-});
-bulletsToRemove.reverse().forEach(idx => {
-  if (bullets[idx]) {
-    if (bullets[idx].el.parentNode) bullets[idx].el.parentNode.removeChild(bullets[idx].el);
-    bullets.splice(idx, 1);
-  }
-});
-
 // --- Add bullet CSS for visibility ---
 const bulletStyle = document.createElement("style");
 bulletStyle.innerHTML = `
   .bullet {
     transition: left 0.05s linear, top 0.05s linear;
-    border: 2px solid #FFC907;
+    border: 2px solid ${palette.yellow};
     box-sizing: border-box;
+    background: ${palette.darkBlue};
+    box-shadow: 0 0 8px ${palette.yellow};
   }
 `;
 document.head.appendChild(bulletStyle);
