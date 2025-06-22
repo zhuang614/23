@@ -244,7 +244,7 @@ function createTower(x, y) {
   div.dataset.type = "Tower";
   // Use image for tower
   const img = document.createElement("img");
-  img.src = "img/tower.png";
+  img.src = "img/water-can-transparent.png";
   img.alt = "Tower";
   img.style.width = "30px";
   img.style.height = "30px";
@@ -649,7 +649,7 @@ scoreDisplay.style.transition = "color 0.2s";
 
 // --- Charity: water logo and message ---
 const logo = document.createElement("img");
-logo.src = "img/white-tall-charitywater-logo.png"; // Replace with your actual image file name in the img/ folder
+logo.src = "img/cw_logo.png"; // Replace with your actual image file name in the img/ folder
 logo.alt = "charity: water";
 logo.style.height = "40px";
 logo.style.margin = "10px";
